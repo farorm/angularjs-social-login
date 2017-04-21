@@ -1,8 +1,8 @@
-"use strict";
+'use strict';
 
 var socialLogin = angular.module('socialLogin', []);
 
-socialLogin.provider("social", function(){
+socialLogin.provider('social', function(){
 	var fbKey, fbApiV, googleKey, linkedInKey;
 	return {
 		setFbKey: function(obj){
@@ -12,7 +12,7 @@ socialLogin.provider("social", function(){
 			fbJs = d.createElement('script'); 
 			fbJs.id = id; 
 			fbJs.async = true;
-			fbJs.src = "//connect.facebook.net/en_US/sdk.js";
+			fbJs.src = '//connect.facebook.net/en_US/sdk.js';
 
 			fbJs.onload = function() {
 				FB.init({ 
@@ -31,7 +31,7 @@ socialLogin.provider("social", function(){
 			var d = document, gJs, ref = d.getElementsByTagName('script')[0];
 			gJs = d.createElement('script');
 			gJs.async = true;
-			gJs.src = "//apis.google.com/js/platform.js"
+			gJs.src = '//apis.google.com/js/platform.js'
 
 			gJs.onload = function() {
 				var params ={
@@ -50,8 +50,8 @@ socialLogin.provider("social", function(){
 			var lIN, d = document, ref = d.getElementsByTagName('script')[0];
 			lIN = d.createElement('script');
 			lIN.async = false;
-			lIN.src = "//platform.linkedin.com/in.js";
-			lIN.text = ("api_key: " + linkedInKey).replace("\"", "");
+			lIN.src = '//platform.linkedin.com/in.js';
+			lIN.text = ('api_key: ' + linkedInKey).replace('\"', '');
 	        ref.parentNode.insertBefore(lIN, ref);
 	    },
 		$get: function(){
@@ -65,37 +65,37 @@ socialLogin.provider("social", function(){
 	}
 });
 
-socialLogin.factory("socialLoginService", function($window, $rootScope){
+socialLogin.factory('socialLoginService',['$window', '$rootScope', function($window, $rootScope) {
 	return {
 		logout: function(){
 			var provider = $window.localStorage.getItem('_login_provider');
 			switch(provider) {
-				case "google":
+				case 'google':
 					//its a hack need to find better solution.
-					var gElement = document.getElementById("gSignout");
+					var gElement = document.getElementById('gSignout');
 					if (typeof(gElement) != 'undefined' && gElement != null)
 					{
 					  gElement.remove();
 					}
 					var d = document, gSignout, ref = d.getElementsByTagName('script')[0];
 					gSignout = d.createElement('script');
-					gSignout.src = "https://accounts.google.com/Logout";
-					gSignout.type = "text/javascript";
-					gSignout.id = "gSignout";
+					gSignout.src = 'https://accounts.google.com/Logout';
+					gSignout.type = 'text/javascript';
+					gSignout.id = 'gSignout';
 					$window.localStorage.removeItem('_login_provider');
-					$rootScope.$broadcast('event:social-sign-out-success', "success");
+					$rootScope.$broadcast('event:social-sign-out-success', 'success');
 					ref.parentNode.insertBefore(gSignout, ref);
 			        break;
-				case "linkedIn":
+				case 'linkedIn':
 					IN.User.logout(function(){
 						$window.localStorage.removeItem('_login_provider');
-					 	$rootScope.$broadcast('event:social-sign-out-success', "success");
+					 	$rootScope.$broadcast('event:social-sign-out-success', 'success');
 					}, {});
 					break;
-				case "facebook":
+				case 'facebook':
 					FB.logout(function(res){
 						$window.localStorage.removeItem('_login_provider');
-					 	$rootScope.$broadcast('event:social-sign-out-success', "success");
+					 	$rootScope.$broadcast('event:social-sign-out-success', 'success');
 					});
 					break;
 			}
@@ -104,27 +104,29 @@ socialLogin.factory("socialLoginService", function($window, $rootScope){
 			$window.localStorage.setItem('_login_provider', provider);
 		}
 	}
-});
+}]);
 
-socialLogin.directive("linkedIn", function($rootScope, social, socialLoginService, $window){
+socialLogin.directive('linkedIn',['$rootScope', 'social', 'socialLoginService', '$window',
+	function($rootScope, social, socialLoginService, $window){
 	return {
 		restrict: 'EA',
 		scope: {},
 		link: function(scope, ele, attr){
-		    ele.on("click", function(){
+		    ele.on('click', function(){
 		  		IN.User.authorize(function(){
-					IN.API.Raw("/people/~:(id,first-name,last-name,email-address,picture-url)").result(function(res){
-						socialLoginService.setProvider("linkedIn");
-						var userDetails = {name: res.firstName + " " + res.lastName, email: res.emailAddress, uid: res.id, provider: "linkedIN", imageUrl: res.pictureUrl};
+					IN.API.Raw('/people/~:(id,first-name,last-name,email-address,picture-url)').result(function(res){
+						socialLoginService.setProvider('linkedIn');
+						var userDetails = {name: res.firstName + ' ' + res.lastName, email: res.emailAddress, uid: res.id, provider: 'linkedIN', imageUrl: res.pictureUrl};
 						$rootScope.$broadcast('event:social-sign-in-success', userDetails);
 				    });
 				});
 			})
 		}
 	}
-})
+}]);
 
-socialLogin.directive("gLogin", function($rootScope, social, socialLoginService){
+socialLogin.directive('gLogin', ['$rootScope', 'social', 'socialLoginService',
+ function($rootScope, social, socialLoginService){
 	return {
 		restrict: 'EA',
 		scope: {},
@@ -140,30 +142,31 @@ socialLogin.directive("gLogin", function($rootScope, social, socialLoginService)
 						name: profile.getName(), 
 						email: profile.getEmail(), 
 						uid: profile.getId(), 
-						provider: "google", 
+						provider: 'google', 
 						imageUrl: profile.getImageUrl()
 					}
 				}
-		    	if(typeof(scope.gauth) == "undefined")
+		    	if(typeof(scope.gauth) == 'undefined')
 		    		scope.gauth = gapi.auth2.getAuthInstance();
 				if(!scope.gauth.isSignedIn.get()){
 					scope.gauth.signIn().then(function(googleUser){
-						socialLoginService.setProvider("google");
+						socialLoginService.setProvider('google');
 						$rootScope.$broadcast('event:social-sign-in-success', fetchUserDetails());
 					}, function(err){
 						console.log(err);
 					});
 				}else{
-					socialLoginService.setProvider("google");
+					socialLoginService.setProvider('google');
 					$rootScope.$broadcast('event:social-sign-in-success', fetchUserDetails());
 				}
 	        	
 	        });
 		}
 	}
-});
+}]);
 
-socialLogin.directive("fbLogin", function($rootScope, social, socialLoginService, $q){
+socialLogin.directive('fbLogin', ['$rootScope', 'social', 'socialLoginService', '$q',
+ function($rootScope, social, socialLoginService, $q) {
 	return {
 		restrict: 'EA',
 		scope: {},
@@ -180,7 +183,7 @@ socialLogin.directive("fbLogin", function($rootScope, social, socialLoginService
 								name: res.name, 
 								email: res.email, 
 								uid: res.id, 
-								provider: "facebook", 
+								provider: 'facebook', 
 								imageUrl: res.picture.data.url
 							});
 						}
@@ -188,18 +191,18 @@ socialLogin.directive("fbLogin", function($rootScope, social, socialLoginService
 					return deferred.promise;
 				}
 				FB.getLoginStatus(function(response) {
-					if(response.status === "connected"){
+					if(response.status === 'connected'){
 						fetchUserDetails().then(function(userDetails){
-							userDetails["token"] = response.authResponse.accessToken;
-							socialLoginService.setProvider("facebook");
+							userDetails['token'] = response.authResponse.accessToken;
+							socialLoginService.setProvider('facebook');
 							$rootScope.$broadcast('event:social-sign-in-success', userDetails);
 						});
 					}else{
 						FB.login(function(response) {
-							if(response.status === "connected"){
+							if(response.status === 'connected'){
 								fetchUserDetails().then(function(userDetails){
-									userDetails["token"] = response.authResponse.accessToken;
-									socialLoginService.setProvider("facebook");
+									userDetails['token'] = response.authResponse.accessToken;
+									socialLoginService.setProvider('facebook');
 									$rootScope.$broadcast('event:social-sign-in-success', userDetails);
 								});
 							}
@@ -209,4 +212,4 @@ socialLogin.directive("fbLogin", function($rootScope, social, socialLoginService
 			});
 		}
 	}
-})
+});
